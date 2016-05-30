@@ -1,0 +1,67 @@
+#
+# NetQi - OSX Makefile
+# ----------------------------------------------
+#
+# inspired by the makefile system of Michal Zalewski <lcamtuf@coredump.cx>
+# (C) Copyright 2005-2008 by LSV, Elie Bursztein <eb@lsv.ens-cachan.fr>
+#CC      = gcc -static
+CC	= gcc
+LIBS	= -lm
+STRIP   = strip
+#CFLAGS	=   -Wconversion
+CFLAGS  =  -Wall -g  -Wunused -Wuninitialized -O  -Wfloat-equal  -Wredundant-decls -Wshadow  -Wunreachable-code -Wextra
+#CFLAGS  = -D_NDEBUG -O3 -Wall -fomit-frame-pointer -funroll-loops
+NAME	= NetQi
+SRC=    map.c\
+	rule.c\
+	game.c\
+	game_graph.c\
+        parser.c\
+	util.c\
+	graph.c\
+	tree.c\
+	tree_branch.c\
+	output.c\
+	utility_function.c\
+	strategy.c\
+	penality.c\
+	formula.c\
+	location.c\
+	preprocessor.c\
+	main.c
+
+regular:    $(NAME)
+
+all:	clean $(NAME)
+
+static: $(NAME)-static
+
+OBJ     = $(SRC:.c=.o)
+$(NAME)         : $(OBJ)
+	$(CC) $(CFLAGS) -o $(NAME) $(OBJ) $(LIBS)
+
+$(NAME)-static	: $(OBJ) 
+	$(CC) -static $(CFLAGS) -o $(NAME) $(OBJ) $(LIBS)
+
+strip:
+	strip $(NAME) 2>/dev/null || true
+	
+clean:
+	rm -f core core.[0123456789]* *.bak *~ *.o $(NAME) a.out $(NAME)-static
+	rm -f mk/*~ headers/*~ doc/*~ scenario/*~ scenario/oakland/*~
+	
+install: $(NAME)
+	cp -f $(NAME) /usr/sbin/
+	@echo "You might want to test the soft now."
+
+dist:
+	rm -f core core.[0123456789]* *.bak *~ *.o $(NAME) a.out $(NAME)-static
+	rm -f mk/*~ headers/*~ doc/*~ scenario/*~ scenario/oakland/*~
+	rm -rf ../netqi/*
+	cp *.c ../netqi/
+	cp Build Makefile INSTALL README Copyright ../netqi/
+	mkdir ../netqi/headers
+	cp headers/*	../netqi/headers/
+	mkdir ../netqi/mk
+	cp mk/* ../netqi/mk/
+

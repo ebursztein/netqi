@@ -1,0 +1,53 @@
+#Title:TATL formula model checking
+#Description: This game illustrates how NetQi can be used to verify (model-check) a TATL formula et provide a counter-example if it exist.
+#Author:Elie Bursztein
+#Version:1.5
+#Type:Model-checking
+#Revision:05/11/2007
+#AverageExecTime:1
+#plays:12
+#states:101
+#Reference:
+#ReferenceUrl:
+##
+
+### General ###
+
+nodes=6
+
+
+<sets>
+Vuln:3,4
+Public:3,4
+Compr:false
+NeedPub:3,4
+</sets>
+
+
+<rules>
+I:2:Compromise 0 Day:Vuln^Public^!Compr=>Compr
+I:7:Compromise Public:Vuln^Public^!Compr=>Compr
+I:4:Compromise Backward:!Compr^>Compr=>Compr
+I:4:Compromise Forward:Compr^~Compr=>>Compr
+
+A:1:Firewall:Public^Vuln->!Public
+A:1:UnFirewall:!Public^!Vuln^NeedPub->Public
+A:3:Patch:Vuln=>!Vuln^!Compr
+</rules>
+
+<graph>
+0->3
+1->3
+1->4
+2->4
+3->5
+4->5
+0=1
+1=1
+2=1
+3=21
+4=31
+5=1351
+</graph>
+
+tatlFormula=(~!Compr:5)

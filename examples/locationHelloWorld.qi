@@ -1,0 +1,35 @@
+#Title:Hello World Example
+#Description: This is the basic example used to introduce strategy
+#Author:Elie Bursztein
+#Version:1.0
+#Type:Strategy
+#Revision:01/16/2008
+#AverageExecTime:1
+#plays:2
+#states:7
+#Reference:
+#ReferenceUrl:
+##
+
+### General ###
+nodes=1
+
+<sets>
+Vuln:1
+Compr:false
+</sets>
+
+<rules>
+I:3:Compromise:Vuln=>Compr:200@mynet:mynet
+A:6:Patch slow:Vuln=>!Vuln:500@mynet
+A:1:Patch fast:Vuln=>!Vuln:5000@mynet
+</rules>
+<graph>
+1=42
+1@mynet
+1:http
+</graph>
+
+tatlFormula=(~!Compr:1)
+
+strategy(Defense,A,MIN(Cost),Cost,~!Compr,mynet)

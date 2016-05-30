@@ -1,0 +1,126 @@
+#Title:Multi-sites defense with penalties
+#Description: This game use location and penalty to model a multi-sites defense against 0day attack.
+#Author:Elie Bursztein
+#Version:1.6
+#Type:Strategy
+#Revision:08/08/2008
+#AverageExecTime:1
+#plays:1628
+#states:12391
+#Reference:
+#ReferenceUrl:
+##
+
+### General ###
+nodes=10
+
+<sets>
+//sets used for timeline
+0DayAvail:false
+CustomAvail:false
+PubAvail:false
+PatchAvail:false
+Detected:false
+//set used to specify which host are monitored : the honeynet
+Monitored:2,3,4
+//sets used used for network state
+Vuln:3,6
+Compr:false
+Public:true
+</sets>
+
+<rules>
+###vulnerability cycle (not granting rules)###
+
+//Exploit availability cycle
+
+I:48:0day available:!0DayAvail->0DayAvail@virtual
+I:288:Custom exploit available:!CustomAvail^0DayAvail->CustomAvail@virtual
+I:48:Public exploit available:!PubAvail^CustomAvail->PubAvail@virtual
+
+//patch availability cycle (assume that patch and public exploit are available at the same time if not reduce on or the other time)
+A:48:Patch available:!PatchAvail^CustomAvail->PatchAvail@virtual
+
+
+###attack rules (Incident granting rule)####
+
+//0day attack
+I:3:Compromise 0 day:>0DayAvail^Vuln^Public^!Compr=>Compr:20000
+//Custom attack
+I:4:Compromise custom:>CustomAvail^Vuln^Public^!Compr=>Compr:2000
+//Public attack
+I:7:Compromise public:>PubAvail^Vuln^Public^!Compr=>Compr:200
+
+//propagation
+I:2:Trust abuse:!Compr^>Compr=>Compr:200@company:company
+###detection rules###
+
+//catch attack on honeynet 
+A:1:Attack catched:Monitored^Compr^!Detected->Detected:2000@honeynet
+
+//defense rules 
+
+//firewall triggered by honeynet attack
+A:0:Firewall:>Detected^Vuln^Public->!Public:2000@company:honeynet
+//firewall triggered by vulnerability disclosure
+A:3:Firewall:>CustomAvail^Vuln^Public->!Public:2000@company:virtual
+A:1:UnFirewall:!Vuln^!Public->Public@company
+//restricted to prod  network (or it will patch the honeynet which is not a good idea)
+A:6:Patch:>PatchAvail^Vuln=>!Vuln:500@company:virtual
+</rules>
+
+//location 1 is the virtual node
+//location 2 is the honeynet
+//location 3 is the production network
+<graph>
+
+//node locations
+1@virtual
+2@honeynet
+3@honeynet
+4@honeynet
+5@company
+6@company
+7@company
+
+//dependency to attack to use timeline event
+2->1
+3->1
+4->1
+5->1
+6->1
+7->1
+
+//dependency between real service and honey service
+5->2
+6->3
+7->4
+
+//dependency between real services
+5->6
+7->6
+
+
+//node label 
+1:virtual
+2:fake WWW
+3:fake database
+4:fake email
+5:www
+6:database
+7:email
+</graph>
+
+
+
+<penality>
+A:2:Monitored:1000:ADD
+A:3:Monitored:1000:ADD
+A:4:Monitored:1000:ADD
+//A:5:!Public:100:ADD
+//A:6:!Public:100:ADD
+//A:7:!Public:100:ADD
+</penality>
+
+strategy(Defense,A,MAX(OCost)^MIN(Cost)^MIN(Time),OCost>Cost>Time,~!Compr,company)
+//strategy(Intrusion example,I,MAX(Reward)^MAX(OCost),Reward>OCost,|+Compr)
